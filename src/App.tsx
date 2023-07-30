@@ -1,14 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 function App() {
-
-  const [WIDTH, setWidth] = useState(600);
+  const [WIDTH, setWidth] = useState(300);
   const [GAP, setGap] = useState(3);
   const [CELLS_PER_THIRD, setCellsPerThird] = useState(4);
-  const [color, setColor] = useState('#0090ff'); // Set the default color value
+  const [color, setColor] = useState("#a855f7"); // Set the default color value
   const [borderRadius, setBorderRadius] = useState(3);
   const [scromble, setScromble] = useState(0.1);
   const [strokeWidth, setStrokeWidth] = useState(1);
+  const [, setStr] = useState(
+    btoa(
+      Array([(CELLS_PER_THIRD * 3) ** 2])
+        .map(() => 0)
+        .join("")
+    )
+  );
 
   // don't change this?
   const THIRD = 3;
@@ -18,16 +24,10 @@ function App() {
   const INNER_WIDTH = WIDTH_PER_CELL - GAP - GAP;
 
   function drawGrid(ctx: CanvasRenderingContext2D) {
-
     // draw background
     ctx.beginPath();
     ctx.fillStyle = "#FFF";
-    ctx.fillRect(
-      0 ,
-      0 ,
-      WIDTH ,
-      WIDTH 
-    );
+    ctx.fillRect(0, 0, WIDTH, WIDTH);
 
     // draw center square
     ctx.strokeStyle = color;
@@ -43,6 +43,8 @@ function App() {
     );
     ctx.stroke();
 
+    const binArr = [];
+
     for (let i = 0; i < ROWS; i++) {
       for (let j = 0; j < ROWS; j++) {
         if (
@@ -52,8 +54,11 @@ function App() {
           j * WIDTH_PER_CELL >= WIDTH * (2 / 3)
         ) {
           if (Math.random() < scromble) {
+            binArr[i * 10 + j] = 0;
             continue;
           }
+
+          binArr[i * 10 + j] = 1;
 
           // outline
 
@@ -84,23 +89,31 @@ function App() {
         }
       }
     }
+
+    setStr(binaryToBase64(binArr));
+  }
+  function binaryToBase64(binaryArray: Array<number>): string {
+    // Convert binary array to a string
+    const binaryString = String.fromCharCode.apply(null, binaryArray);
+
+    // Convert the string to Base64
+    return btoa(binaryString);
   }
 
   useEffect(() => {
-    const c = document.getElementById('myCanvas') as HTMLCanvasElement;
+    const c = document.getElementById("myCanvas") as HTMLCanvasElement;
     if (!c) {
       return;
     }
 
-    const ctx = c.getContext('2d');
+    const ctx = c.getContext("2d");
     if (!ctx) {
       return;
     }
 
     ctx.clearRect(0, 0, WIDTH, WIDTH);
 
-    drawGrid(ctx)
-
+    drawGrid(ctx);
   }, [WIDTH, CELLS_PER_THIRD, GAP, color, borderRadius, scromble, strokeWidth]);
 
   // gets the pixel x/y to subtract from each grid's start position
@@ -134,45 +147,48 @@ function App() {
   }
 
   function save() {
-    const c = document.getElementById('myCanvas') as HTMLCanvasElement;
+    const c = document.getElementById("myCanvas") as HTMLCanvasElement;
     if (!c) {
       return;
     }
 
-    var link = document.getElementById('link');
+    const link = document.getElementById("link");
 
     if (!link) {
       return;
     }
 
-    link.setAttribute('download', (Math.random() * 2).toString().replace(".", "") + '.png');
-    link.setAttribute('href', c.toDataURL("image/png").replace("image/png", "image/octet-stream"));
+    link.setAttribute(
+      "download",
+      (Math.random() * 2).toString().replace(".", "") + ".png"
+    );
+    link.setAttribute(
+      "href",
+      c.toDataURL("image/png").replace("image/png", "image/octet-stream")
+    );
     link.click();
   }
 
   return (
     <div
-      className="w-screen h-screen p-4"
+      className="w-screen min-h-screen p-4"
+      style={{ backgroundColor: color }}
     >
-      <h1 className='font-bold font-mono text-3xl'>metro gridFigurator</h1>
-      <div style={{
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        position: 'relative',
-
-      }}>
-
-        <div style={{ marginRight: "2rem", width: "800px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div className="bg-white rounded-lg flex flex-col md:flex-row justify-center items-center relative shadow-sm p-6">
+        <div className="m-0 lg:mr-8 max-w-[600px] flex items-center justify-center min-w-min">
           <canvas
             id="myCanvas"
             width={WIDTH}
             height={WIDTH}
-            style={{ margin: "2rem", outline: `${strokeWidth}px solid ` + color, borderRadius: borderRadius * 4 }}
+            style={{
+              // margin: "2rem",
+              outline: `${strokeWidth}px solid ` + color,
+              borderRadius: borderRadius * 4,
+            }}
+            className="mb-8"
           ></canvas>
         </div>
-        <div>
+        <div className="grid grid-cols-3 md:grid-cols-2 gap-4 min-w-min">
           <div className="mb-4">
             <label
               className="block text-gray-700 font-bold mb-2"
@@ -181,6 +197,7 @@ function App() {
               Width: {WIDTH}
             </label>
             <input
+              style={{ accentColor: color }}
               type="range"
               id="widthSlider"
               className="w-full"
@@ -199,6 +216,7 @@ function App() {
               Gap: {GAP}
             </label>
             <input
+              style={{ accentColor: color }}
               type="range"
               id="GAPSlider"
               className="w-full"
@@ -217,6 +235,7 @@ function App() {
               Cells Per Third: {CELLS_PER_THIRD}
             </label>
             <input
+              style={{ accentColor: color }}
               type="range"
               id="CELLS_PER_THIRDSlider"
               className="w-full"
@@ -228,10 +247,14 @@ function App() {
             />
           </div>
           <div className="mb-4">
-            <label className="block text-gray-700 font-bold mb-2" htmlFor="colorPicker">
+            <label
+              className="block text-gray-700 font-bold mb-2"
+              htmlFor="colorPicker"
+            >
               Color:
             </label>
             <input
+              style={{ accentColor: color }}
               type="color"
               id="colorPicker"
               className="w-full"
@@ -247,6 +270,7 @@ function App() {
               Border Radius: {borderRadius}
             </label>
             <input
+              style={{ accentColor: color }}
               type="range"
               id="borderRadius"
               className="w-full"
@@ -265,6 +289,7 @@ function App() {
               Stroke Width: {strokeWidth}
             </label>
             <input
+              style={{ accentColor: color }}
               type="range"
               id="strokeWidth"
               className="w-full"
@@ -283,6 +308,7 @@ function App() {
               scromble: {scromble}
             </label>
             <input
+              style={{ accentColor: color }}
               type="range"
               id="scromble"
               className="w-full"
@@ -293,10 +319,15 @@ function App() {
               onChange={(e) => setScromble(Number(e.target.value))}
             />
           </div>
+          <button
+            onClick={save}
+            style={{ backgroundColor: color }}
+            className="cursor-pointer rounded p-1 text-white px-4 tracking-wide h-10 place-items-end"
+          >
+            save
+          </button>
         </div>
-      </div>
-      <div className='w-full flex items-center justify-center'>
-        <button onClick={save} className="cursor-pointer rounded p-1 bg-blue-500 text-white px-4 tracking-wide">save</button>
+        {/* <pre>{str}</pre> */}
       </div>
       <a id="link"></a>
     </div>
